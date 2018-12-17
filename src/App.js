@@ -1,28 +1,51 @@
-import React, { Component } from 'react';
-import logo from './logo.svg';
-import './App.css';
+import React from "react";
+import { ApolloClient } from "apollo-client";
+import { InMemoryCache } from "apollo-cache-inmemory";
+import { withClientState } from "apollo-link-state";
+import { resolvers, defaults } from "./resolvers";
+import { ApolloProvider } from "react-apollo";
+import List from "./List";
+import TodoInput from "./TodoInput";
+import "./App.css";
 
-class App extends Component {
-  render() {
-    return (
-      <div className="App">
-        <header className="App-header">
-          <img src={logo} className="App-logo" alt="logo" />
-          <p>
-            Edit <code>src/App.js</code> and save to reload.
-          </p>
-          <a
-            className="App-link"
-            href="https://reactjs.org"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Learn React
-          </a>
-        </header>
-      </div>
-    );
+const cache = new InMemoryCache();
+
+const typeDefs = `
+  type Todo {
+    id: Int!
+    text: String!
+    completed: Boolean!
   }
-}
+
+  type Mutation {
+    addTodo(text: String!): Todo
+    toggleTodo(id: String!): Todo
+  }
+
+  type Query {
+    todos: [Todo]!
+  }
+`;
+
+const stateLink = withClientState({
+  cache,
+  resolvers: resolvers,
+  defaults: defaults,
+  typeDefs: typeDefs
+});
+
+const client = new ApolloClient({
+  cache: cache,
+  link: stateLink
+});
+
+const App = props => {
+  return (
+    <ApolloProvider client={client}>
+      <TodoInput />
+      <List />
+    </ApolloProvider>
+  );
+};
 
 export default App;
